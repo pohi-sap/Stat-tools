@@ -139,9 +139,9 @@ def cache_query(zipfoldername, source, statute):
         cachezipsourcefile = source + '.htm.zip'
         searchzipfile = source + '.' + statute.split('.')[0] + '.htm'
         with ZipFile(cachezipsourcefile, mode="r") as zfile:
-            with zfile.open(searchzipfile) as f:
+            with zfile.open(searchzipfile, mode='r') as f:
                     html_cache_file = f.read() #TODO check what zfile.open gives, fix for loop.
-        html_file = html_cache_file.split('\r')
+        html_file = html_cache_file.split("\r")
         print('STATUTE FOUND IN CACHE!')
     except ValueError:
         print('ERROR: STATUTE NOT FOUND IN CACHE.')

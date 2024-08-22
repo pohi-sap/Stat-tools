@@ -10,14 +10,8 @@ import os
 class MyHTMLParser(HTMLParser):
     alldata = ''
     def handle_starttag(self, tag, attrs):
-        #print(f'|| start tag:{tag} attr: {attrs} ||')
-        #print(f'|| type start tag:{tag} attr: {type(attrs)} ||')
         if(tag == 'p' and len(attrs) > 1):
             self.alldata += '\n'
-
-#    def handle_endtag(self, tag):
-#        print(f'|| end tag:{tag} ||')
-#        print("\n")
 
     def handle_data(self, data):
         self.alldata += data 
@@ -62,6 +56,10 @@ arg_parser = argparse.ArgumentParser(
 arg_parser.add_argument('-l','--list-sources',
                         action='store_true',
                     help='Shows a list of Sources to choose from.')
+arg_parser.add_argument('-c','--create-cache',
+                        action='store_true',
+                    help='Create cache file dir \'statute_cache\' in this directory for use with local statute search')
+
 arg_parser.add_argument('-s','--source',
                         metavar='TN', type=str, nargs=1,
                     help='Set statute source.')
@@ -77,31 +75,27 @@ arg_parser.add_argument('-q','--query',
                     help='Choose data source web or cache [-w] web request, [-c] cache(Default).')
 
 args = arg_parser.parse_args()
-#Show list of sources cli
-if(args.list_sources):
-    for s in source:
-        print(f'{source[s]} - {s}')
-    sys.exit(0)
-
 html_parser = MyHTMLParser()
-source = args.source[0]
-statute = args.statute[0]
-section = statute.split('.')[0]
-url_base_string = f'https://statutes.capitol.texas.gov/Docs/{source}/htm/{source}.{section}.htm#{statute}'
-
-re_statute_pattern = f'name="{statute}"'
 
 # Web request
 def web_query():
+
+    source = args.source[0]
+    statute = args.statute[0]
+    section = statute.split('.')[0]
+    url_base_string = f'https://statutes.capitol.texas.gov/Docs/{source}/htm/{source}.{section}.htm#{statute}'
+
+    re_statute_pattern = f'name="{statute}"'
+
     r = requests.get(url_base_string)
     r_html = r.text.split('\r') # gives statute followed by effective date, buffered by '\r\n' line between each statute
 
     next_row = 0
     for index, line in enumerate(r_html):
         statute_paragraph = re.search(re_statute_pattern,line)
-        # ugly way to get effective date, check r_html for req get format
+        # ugly way to get effective date, check r_html for req get format below
         if(next_row == 1):
-            if(args.format[0] == 'h'):
+            if(args.format[0] == 'h'):# do this if html is requested
                 print(line)
             else:
                 html_parser.feed(line)
@@ -109,18 +103,21 @@ def web_query():
                 print(html_parser.alldata.strip())
             next_row -=1
             break
-        if(statute_paragraph):
-            if(args.format[0] == 'h'):
+        # ^ ugly way to get effective date, check r_html for req get format above
+
+        if(statute_paragraph): # here we used regex and found the statute.
+            if(args.format[0] == 'h'): # do this if html is requested
                 print(line)
             else:
                 html_parser.feed(line)
                 html_parser.close()
-            next_row +=1
+            next_row +=1 # dumb way to also get the effective date/amend info for the statute
 
 def download_files(url):
     response = requests.get(url)
     subdirectory = './statute_cache'
 
+    # good place to check if its already there!
     if not os.path.isdir(subdirectory):
         os.mkdir(subdirectory)
 
@@ -129,25 +126,45 @@ def download_files(url):
         file.write(response.content)
     print(f"Downloaded file {filename}")
 
-def cache_query(zipfoldername, source, statute):
+def cache_query(source, statute):
+
+    source = args.source[0]
+    statute = args.statute[0]
+    section = statute.split('.')[0]
+
+    re_statute_pattern = f'name="{statute}"'
+
     subdirectory = './statute_cache'
-    filesInZip = []
+
+    # check if we even have this yet, if not, ask to create!
+    if not os.path.isdir(subdirectory):
+        print('Existing statute folder not found')
+        s = input('Do you want to create it now? [Y/n] ')
+        if(s == 'Y' or s == 'y'):
+            print('Creating cache, then continuing with searching for statute.')
+            make_cache()
+        else:
+            print('No cache created, exiting')
+            sys.exit()
+
+
+
+
     html_cache_file = ''
     # open zip first ##.htm.zip
     # open statute file next ##.###.htm
     try: 
-        cachezipsourcefile = source + '.htm.zip'
-        searchzipfile = source + '.' + statute.split('.')[0] + '.htm'
+        cachezipsourcefile = os.path.join(subdirectory, (source.upper() + '.htm.zip'))
+        searchzipfile = source + '.' + section + '.htm'
         with ZipFile(cachezipsourcefile, mode="r") as zfile:
-            with zfile.open(searchzipfile, mode='r') as f:
-                    html_cache_file = f.read() #TODO check what zfile.open gives, fix for loop.
-        html_file = html_cache_file.split("\r")
-        print('STATUTE FOUND IN CACHE!')
+            with zfile.open(searchzipfile) as f:
+                    html_cache_file = str(f.read()) 
+        cached_html_file = html_cache_file.split('\\r')
     except ValueError:
         print('ERROR: STATUTE NOT FOUND IN CACHE.')
 
     next_row = 0
-    for index, line in enumerate(html_file):
+    for index, line in enumerate(cached_html_file):
         statute_paragraph = re.search(re_statute_pattern,line)
         # ugly way to get effective date, check r_html for req get format
         if(next_row == 1):
@@ -169,6 +186,10 @@ def cache_query(zipfoldername, source, statute):
 
 def make_cache():
     #use https://statutes.capitol.texas.gov/Docs/Zips/SD.htm.zip
+    subdirectory = './statute_cache'
+    if os.path.isdir(subdirectory):
+        print(f'Cache exists at {subdirectory} already, Exiting...')
+        sys.exit()
     urls = []
     source = {
             'The Texas Constitution': 'CN',
@@ -209,4 +230,16 @@ def make_cache():
     with ThreadPoolExecutor() as executor:
         executor.map(download_files, urls)
 
-make_cache()
+#Show list of sources cli
+if(args.list_sources):
+    for s in source:
+        print(f'{source[s]} - {s}')
+    sys.exit(0)
+if(args.create_cache):
+    print('Creating some cache now!')
+    make_cache()
+match (args.query[0]):
+    case 'w':
+        web_query()
+    case 'c':
+        cache_query(args.source[0], args.statute[0])

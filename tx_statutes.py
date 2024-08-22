@@ -155,7 +155,7 @@ def cache_query(source, statute):
     # open statute file next ##.###.htm
     try: 
         cachezipsourcefile = os.path.join(subdirectory, (source.upper() + '.htm.zip'))
-        searchzipfile = source + '.' + section + '.htm'
+        searchzipfile = source.lower() + '.' + section + '.htm'
         with ZipFile(cachezipsourcefile, mode="r") as zfile:
             with zfile.open(searchzipfile) as f:
                     html_cache_file = str(f.read()) 

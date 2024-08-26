@@ -147,9 +147,6 @@ def cache_query(source, statute):
             print('No cache created, exiting')
             sys.exit()
 
-
-
-
     html_cache_file = ''
     # open zip first ##.htm.zip
     # open statute file next ##.###.htm
@@ -229,6 +226,26 @@ def make_cache():
 
     with ThreadPoolExecutor() as executor:
         executor.map(download_files, urls)
+
+    #TODO verify integrity of zip files with ZipFile.testzip() -- returns None if everything is good.
+
+def extract_cache():
+    print("Use ZipFile.namelist() && ZipFile.extract() to dump all this stuff into one dir, then edit web_query && cache_query to make this work in a better way")
+    make_cache() # ensure we even have the first download setup already.
+    # make list of memebers in statute_cache
+    # here would be create ZipFile.construct
+
+    subdirectory = './statute_cache'
+    subdirectory_extracted = './statute_cache_extracted'
+
+    # good place to check if its already there!
+
+    zip_filenames = os.listdir(subdirectory)
+
+    for index, file in enumerate(zip_filenames):
+        print(f'Extracting {index}/29 - {file} to {subdirectory_extracted}')
+        with ZipFile(file, mode="r") as zfile:
+            zfile.extractall(path=subdirectory_extracted)
 
 #Show list of sources cli
 if(args.list_sources):

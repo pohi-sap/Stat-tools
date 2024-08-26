@@ -59,6 +59,9 @@ arg_parser.add_argument('-l','--list-sources',
 arg_parser.add_argument('-c','--create-cache',
                         action='store_true',
                     help='Create cache file dir \'statute_cache\' in this directory for use with local statute search')
+arg_parser.add_argument('-e','--extract-cache',
+                        action='store_true',
+                    help='Extract folder from cache file dir \'statute_cache\' in this directory')
 
 arg_parser.add_argument('-s','--source',
                         metavar='TN', type=str, nargs=1,
@@ -230,7 +233,6 @@ def make_cache():
     #TODO verify integrity of zip files with ZipFile.testzip() -- returns None if everything is good.
 
 def extract_cache():
-    print("Use ZipFile.namelist() && ZipFile.extract() to dump all this stuff into one dir, then edit web_query && cache_query to make this work in a better way")
     make_cache() # ensure we even have the first download setup already.
     # make list of memebers in statute_cache
     # here would be create ZipFile.construct
@@ -239,10 +241,16 @@ def extract_cache():
     subdirectory_extracted = './statute_cache_extracted'
 
     # good place to check if its already there!
+    if not os.path.isdir(subdirectory_extracted):
+        os.mkdir(subdirectory_extracted)
 
     zip_filenames = os.listdir(subdirectory)
+    zip_filenames_wdir = []
 
-    for index, file in enumerate(zip_filenames):
+    for i in zip_filenames: 
+        zip_filenames_wdir.append(os.path.join(subdirectory, i))
+
+    for index, file in enumerate(zip_filenames_wdir):
         print(f'Extracting {index}/29 - {file} to {subdirectory_extracted}')
         with ZipFile(file, mode="r") as zfile:
             zfile.extractall(path=subdirectory_extracted)
@@ -255,6 +263,12 @@ if(args.list_sources):
 if(args.create_cache):
     print('Creating some cache now!')
     make_cache()
+
+# test this function + arg.
+if(args.extract_cache):
+    extract_cache()
+    sys.exit()
+
 match (args.query[0]):
     case 'w':
         web_query()

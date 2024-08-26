@@ -61,7 +61,7 @@ arg_parser.add_argument('-c','--create-cache',
                     help='Create cache file dir \'statute_cache\' in this directory for use with local statute search')
 arg_parser.add_argument('-e','--extract-cache',
                         action='store_true',
-                    help='Extract folder from cache file dir \'statute_cache\' in this directory')
+                    help='Extract ZIPS from cache folder dir \'statute_cache\' output to statute_cache_extracted')
 
 arg_parser.add_argument('-s','--source',
                         metavar='TN', type=str, nargs=1,
@@ -189,7 +189,7 @@ def make_cache():
     subdirectory = './statute_cache'
     if os.path.isdir(subdirectory):
         print(f'Cache exists at {subdirectory} already, Exiting...')
-        sys.exit()
+        sys.exit(0)
     urls = []
     source = {
             'The Texas Constitution': 'CN',
@@ -241,21 +241,22 @@ def extract_cache():
     subdirectory_extracted = './statute_cache_extracted'
 
     # good place to check if its already there!
-    if not os.path.isdir(subdirectory_extracted):
-        os.mkdir(subdirectory_extracted)
+    if os.path.isdir(subdirectory_extracted):
+        print("Already have files extracted to ./statute_cache_extracted")
+        sys.exit(0)
 
+    # get files in folder
     zip_filenames = os.listdir(subdirectory)
     zip_filenames_wdir = []
-
     for i in zip_filenames: 
         zip_filenames_wdir.append(os.path.join(subdirectory, i))
 
     for index, file in enumerate(zip_filenames_wdir):
-        print(f'Extracting {index}/29 - {file} to {subdirectory_extracted}')
+        print(f'Extracting {index}/{len(zip_filenames)} - {file} to {subdirectory_extracted}')
         with ZipFile(file, mode="r") as zfile:
             zfile.extractall(path=subdirectory_extracted)
 
-#Show list of sources cli
+# cli stuff here
 if(args.list_sources):
     for s in source:
         print(f'{source[s]} - {s}')
@@ -264,7 +265,6 @@ if(args.create_cache):
     print('Creating some cache now!')
     make_cache()
 
-# test this function + arg.
 if(args.extract_cache):
     extract_cache()
     sys.exit()

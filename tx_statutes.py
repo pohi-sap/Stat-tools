@@ -74,8 +74,8 @@ arg_parser.add_argument('-f','--format',
                         metavar='t', type=str, nargs=1, default='t',
                     help='Choose output format. [-h] html, [-t] text(Default).')
 arg_parser.add_argument('-q','--query',
-                        metavar='c', type=str, nargs=1, default='c',
-                    help='Choose data source web or cache [-w] web request, [-c] cache(Default).')
+                        metavar='c', type=str, nargs=1, default='czip',
+                    help='Choose data source web or cache [-w] web request, [-czip] cache(Default) [-cdir].')
 
 args = arg_parser.parse_args()
 html_parser = MyHTMLParser()
@@ -129,7 +129,7 @@ def download_files(url):
         file.write(response.content)
     print(f"Downloaded file {filename}")
 
-def cache_query(source, statute):
+def cache_query_zip(source, statute):
 
     source = args.source[0]
     statute = args.statute[0]
@@ -162,6 +162,59 @@ def cache_query(source, statute):
         cached_html_file = html_cache_file.split('\\r')
     except ValueError:
         print('ERROR: STATUTE NOT FOUND IN CACHE.')
+
+    next_row = 0
+    for index, line in enumerate(cached_html_file):
+        statute_paragraph = re.search(re_statute_pattern,line)
+        # ugly way to get effective date, check r_html for req get format
+        if(next_row == 1):
+            if(args.format[0] == 'h'):
+                print(line)
+            else:
+                html_parser.feed(line)
+                html_parser.close()
+                print(html_parser.alldata.strip())
+            next_row -=1
+            break
+        if(statute_paragraph):
+            if(args.format[0] == 'h'):
+                print(line)
+            else:
+                html_parser.feed(line)
+                html_parser.close()
+            next_row +=1
+def cache_query_dir(source, statute):
+
+    source = args.source[0]
+    statute = args.statute[0]
+    section = statute.split('.')[0]
+
+    re_statute_pattern = f'name="{statute}"'
+
+    subdirectory = './statute_cache_extracted'
+
+    # check if we even have this yet, if not, ask to create!
+    if not os.path.isdir(subdirectory):
+        print('Existing statute dump folder not found')
+        s = input('Do you want to create it now? [Y/n] ')
+        if(s == 'Y' or s == 'y'):
+            print('Creating cache, then continuing with searching for statute.')
+            extract_cache()
+        else:
+            print('No cache created, exiting')
+            sys.exit(0)
+
+    html_cache_file = ''
+    # open zip first ##.htm.zip
+    # open statute file next ##.###.htm
+    try: 
+        searchzipfile = os.path.join(subdirectory, (source.lower() + '.' + section + '.htm'))
+
+        with open(searchzipfile) as f:
+                html_cache_file = f.read()
+        cached_html_file = html_cache_file.split('\n')
+    except ValueError:
+        print('ERROR: STATUTE NOT FOUND IN dir CACHE.')
 
     next_row = 0
     for index, line in enumerate(cached_html_file):
@@ -272,5 +325,7 @@ if(args.extract_cache):
 match (args.query[0]):
     case 'w':
         web_query()
-    case 'c':
-        cache_query(args.source[0], args.statute[0])
+    case 'czip':
+        cache_query_zip(args.source[0], args.statute[0])
+    case 'cdir':
+        cache_query_dir(args.source[0], args.statute[0])

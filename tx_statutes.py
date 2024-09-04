@@ -141,7 +141,7 @@ def cache_query_zip(source, statute):
 
     # check if we even have this yet, if not, ask to create!
     if not os.path.isdir(subdirectory):
-        print('Existing statute folder not found')
+        print('Existing statute cache folder not found')
         s = input('Do you want to create it now? [Y/n] ')
         if(s == 'Y' or s == 'y'):
             print('Creating cache, then continuing with searching for statute.')
@@ -196,7 +196,7 @@ def cache_query_dir(source, statute):
     # check if we even have this yet, if not, ask to create!
     if not os.path.isdir(subdirectory):
         print('Existing statute dump folder not found')
-        s = input('Do you want to create it now? [Y/n] ')
+        s = input('Do you want to create the flat directory with many statute htm files now? [Y/n] ')
         if(s == 'Y' or s == 'y'):
             print('Creating cache, then continuing with searching for statute.')
             extract_cache()
@@ -322,7 +322,7 @@ if(args.extract_cache):
     extract_cache()
     sys.exit()
 
-match (args.query[0]):
+match (args.query):
     case 'w':
         web_query()
     case 'czip':

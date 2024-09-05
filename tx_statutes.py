@@ -43,8 +43,8 @@ arg_parser.add_argument('-f','--format',
                         metavar='t', type=str, nargs=1, default='t',
                     help='Choose output format. [-h] html, [-t] text(Default).')
 arg_parser.add_argument('-q','--query',
-                        metavar='c', type=str, nargs=1, default=['czip'],
-                    help='Choose data source web or cache [-w] web request, [-czip] cache(Default) [-cdir].')
+                        metavar='czip', type=str, nargs=1, default=['czip'],
+                    help='Choose data source web or cache [-w] web request, [-czip] cache zip directory(Default) [-cdir] cache unzipped directory.')
 
 args = arg_parser.parse_args()
 html_parser = MyHTMLParser()

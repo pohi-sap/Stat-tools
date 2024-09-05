@@ -16,6 +16,11 @@ This tool will get you all the text from a texas statute, you only need to speci
 
 Texas statutes are searchable [here](https://statutes.capitol.texas.gov/Index.aspx)
 
+install requirements
+```bash
+pip install -r requirements.txt
+```
+
 ## Sources
 Statute Sources are specified using two letters, case insensitive.
 To get a current list of some, use:
@@ -30,7 +35,7 @@ For example when you do this:
 python3 tx_statutes.py --source tx --statute 11.1827
 ```
 It will prompt with the following:
-```bash
+```text
 Existing statute cache folder not found
 Do you want to create it now? ~38MB [Y/n]
 ```

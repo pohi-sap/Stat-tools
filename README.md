@@ -1,14 +1,19 @@
 # Stat-tools
 - **tx_statutes.py** - This is a Python CLI Tool for getting text of a Texas Statute.
 
+
+
 ## Planned features: 
 
 - [ ] json output [requested](https://github.com/pohi-sap/Stat-tools/issues/1)
 
+
+
 ## Get Help with this CLI tool or just look around 😊
 ```bash
-python3 tx_statutes.py -h
+python tx_statutes.py -h
 ```
+
 
 
 # Quick start
@@ -21,18 +26,22 @@ install requirements
 pip install -r requirements.txt
 ```
 
+
+
 ## Sources
 Statute Sources are specified using two letters, case insensitive.
 To get a current list of some, use:
 ```bash
-python3 tx_statutes.py --list-sources
+python tx_statutes.py --list-sources
 ```
+
+
 
 ## Basic useage
 By default, this thing will try and use a cache folder.
 For example when you do this:
 ```bash
-python3 tx_statutes.py --source tx --statute 11.1827
+python tx_statutes.py --source tx --statute 11.1827
 ```
 It will prompt with the following:
 ```text
@@ -96,9 +105,12 @@ trust\'s use that benefit the beneficiaries of the trust.
 ```
 
 ---
+
+
+
 ## HTTP
 You can also do (an?/a?) http request instead of using cache.
 This would be the done using the flag: `--query w`
 ```bash
-python3 tx_statutes.py --source tx --statute 11.1827 --query w
+python tx_statutes.py --source tx --statute 11.1827 --query w
 ```

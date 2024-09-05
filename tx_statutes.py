@@ -285,7 +285,13 @@ def extract_cache():
         with ZipFile(file, mode="r") as zfile:
             zfile.extractall(path=subdirectory_extracted)
 
+
 # cli stuff here
+
+if (not len(sys.argv) > 1):
+    arg_parser.print_help()
+    sys.exit(0)
+
 if(args.list_sources):
     for s in source:
         print(f'{source[s]} - {s}')

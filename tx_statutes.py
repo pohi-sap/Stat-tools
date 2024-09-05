@@ -10,44 +10,13 @@ import os
 class MyHTMLParser(HTMLParser):
     alldata = ''
     def handle_starttag(self, tag, attrs):
-        if(tag == 'p' and len(attrs) > 1):
+        if(tag == 'p' and len(attrs) > 1): # we 'break' on p tags because statutes are separtaed into <p> tags, then len check cuts out white space of the output.
             self.alldata += '\n'
 
     def handle_data(self, data):
         self.alldata += data 
-source = {
-        'The Texas Constitution': 'CN',
-        'Agriculture Code': 'AG',
-        'Alcoholic Beverage Code': 'AL',
-        'Auxillary Water Laws': 'AL',
-        'Business Organizations Code': 'BO',
-        'Business and Commerce Code': 'BC',
-        'Civil practice and Remedies Code': 'CP',
-        'Code of Criminal Procedure': 'CR',
-        'Education Code': 'ED',
-        'Election Code': 'EL',
-        'Estates Code': 'ES',
-        'Family Code': 'FA',
-        'Finance Code': 'FI',
-        'Government Code': 'GV',
-        'Health and Safety Code': 'HS',
-        'Human Resources Code': 'HR',
-        'Insurance Code - Not Codified': 'I1',
-        'Insurance Code': 'IN',
-        'Labor Code': 'LA',
-        'Local Government Code': 'LG',
-        'Natural Resources Code': 'NR',
-        'Occupations Code': 'OC',
-        'Parks and Wildlife Code': 'PW',
-        'Penal Code': 'PE',
-        'Property Code': 'PR',
-        'Special District Local Laws Code': 'SD',
-        'Tax Code': 'TX',
-        'Transportation Code': 'TN',
-        'Utilities Code': 'UT',
-        'Water Code': 'WA',
-        'Vernons Civil Laws': 'CV',
-        }
+source = { 'The Texas Constitution': 'CN', 'Agriculture Code': 'AG', 'Alcoholic Beverage Code': 'AL', 'Auxillary Water Laws': 'AL', 'Business Organizations Code': 'BO', 'Business and Commerce Code': 'BC', 'Civil practice and Remedies Code': 'CP', 'Code of Criminal Procedure': 'CR', 'Education Code': 'ED', 'Election Code': 'EL', 'Estates Code': 'ES', 'Family Code': 'FA', 'Finance Code': 'FI', 'Government Code': 'GV', 'Health and Safety Code': 'HS', 'Human Resources Code': 'HR', 'Insurance Code - Not Codified': 'I1', 'Insurance Code': 'IN', 'Labor Code': 'LA', 'Local Government Code': 'LG', 'Natural Resources Code': 'NR', 'Occupations Code': 'OC', 'Parks and Wildlife Code': 'PW', 'Penal Code': 'PE', 'Property Code': 'PR', 'Special District Local Laws Code': 'SD', 'Tax Code': 'TX', 'Transportation Code': 'TN', 'Utilities Code': 'UT', 'Water Code': 'WA', 'Vernons Civil Laws': 'CV', }
+
 arg_parser = argparse.ArgumentParser(
                     prog='tx_statutes',
                     description='Gets Texas Statute information for source and statute provided',
@@ -74,7 +43,7 @@ arg_parser.add_argument('-f','--format',
                         metavar='t', type=str, nargs=1, default='t',
                     help='Choose output format. [-h] html, [-t] text(Default).')
 arg_parser.add_argument('-q','--query',
-                        metavar='c', type=str, nargs=1, default='czip',
+                        metavar='c', type=str, nargs=1, default=['czip'],
                     help='Choose data source web or cache [-w] web request, [-czip] cache(Default) [-cdir].')
 
 args = arg_parser.parse_args()
@@ -148,7 +117,7 @@ def cache_query_zip(source, statute):
             make_cache()
         else:
             print('No cache created, exiting')
-            sys.exit()
+            sys.exit(0)
 
     html_cache_file = ''
     # open zip first ##.htm.zip
@@ -173,7 +142,8 @@ def cache_query_zip(source, statute):
             else:
                 html_parser.feed(line)
                 html_parser.close()
-                print(html_parser.alldata.strip())
+                l =  html_parser.alldata.strip()
+                print(l)
             next_row -=1
             break
         if(statute_paragraph):
@@ -238,7 +208,7 @@ def cache_query_dir(source, statute):
             next_row +=1
 
 def make_cache():
-    #use https://statutes.capitol.texas.gov/Docs/Zips/SD.htm.zip
+    #use 'https://statutes.capitol.texas.gov/Docs/Zips/SD.htm.zip' for reference
     subdirectory = './statute_cache'
     if os.path.isdir(subdirectory):
         print(f'Cache exists at {subdirectory} already, Exiting...')
@@ -286,16 +256,22 @@ def make_cache():
     #TODO verify integrity of zip files with ZipFile.testzip() -- returns None if everything is good.
 
 def extract_cache():
-    make_cache() # ensure we even have the first download setup already.
-    # make list of memebers in statute_cache
-    # here would be create ZipFile.construct
 
     subdirectory = './statute_cache'
     subdirectory_extracted = './statute_cache_extracted'
 
-    # good place to check if its already there!
+    if not os.path.isdir(subdirectory):
+        print(f'Existing statute cache folder {subdirectory} not found')
+        s = input('Do you want to create it now? [Y/n] ')
+        if(s == 'Y' or s == 'y'):
+            print(f'Creating cache, then continuing with extracting statute htm pages to {subdirectory_extracted}.')
+            make_cache()
+        else:
+            print('No cache created, exiting')
+            sys.exit(0)
+
     if os.path.isdir(subdirectory_extracted):
-        print("Already have files extracted to ./statute_cache_extracted")
+        print(f'Already have existing directory {subdirectory_extracted}, exiting!')
         sys.exit(0)
 
     # get files in folder
@@ -305,7 +281,7 @@ def extract_cache():
         zip_filenames_wdir.append(os.path.join(subdirectory, i))
 
     for index, file in enumerate(zip_filenames_wdir):
-        print(f'Extracting {index}/{len(zip_filenames)} - {file} to {subdirectory_extracted}')
+        print(f'Extracting {index + 1}/{len(zip_filenames)} - {file} to {subdirectory_extracted}')
         with ZipFile(file, mode="r") as zfile:
             zfile.extractall(path=subdirectory_extracted)
 
@@ -322,7 +298,7 @@ if(args.extract_cache):
     extract_cache()
     sys.exit()
 
-match (args.query):
+match (args.query[0]):
     case 'w':
         web_query()
     case 'czip':

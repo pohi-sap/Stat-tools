@@ -1,9 +1,11 @@
 # simple schema for sqlite things
 
-|    Article/Chapter(table)    |
+|    |  Article/Chapter(table)   |                 |                |
+| -  |  ----------------------   | --------------- | -------------- |
 | statute(uuid) |  text(uuid)| section_data(char)| effective_date |
 
 | EXPLAINED |
+| --------- |
 | statute(uuid) -> [table with statute text and dates]|
 | text(uuid) -> [table with statute text & date effective]|
 | section_data(char) [some code that indicates how many levels there are currently in this section]|

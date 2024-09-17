@@ -50,10 +50,11 @@ args = arg_parser.parse_args()
 html_parser = MyHTMLParser()
 
 # Web request
-def web_query():
+def web_query(source, statute):
+    """
+    Given inputs, does an https request for the statute text
+    """
 
-    source = args.source[0]
-    statute = args.statute[0]
     section = statute.split('.')[0]
     url_base_string = f'https://statutes.capitol.texas.gov/Docs/{source}/htm/{source}.{section}.htm#{statute}'
 
@@ -100,13 +101,15 @@ def download_files(url):
 
 def cache_query_zip(source, statute):
 
-    source = args.source[0]
-    statute = args.statute[0]
     section = statute.split('.')[0]
 
     re_statute_pattern = f'name="{statute}"'
 
     subdirectory = './statute_cache'
+
+    cached_html_file = ''
+    statute_html = ''
+    statute_effective_date_html = ''
 
     # check if we even have this yet, if not, ask to create!
     if not os.path.isdir(subdirectory):
@@ -119,40 +122,28 @@ def cache_query_zip(source, statute):
             print('No cache created, exiting')
             sys.exit(0)
 
-    html_cache_file = ''
-    # open zip first ##.htm.zip
-    # open statute file next ##.###.htm
     try: 
         cachezipsourcefile = os.path.join(subdirectory, (source.upper() + '.htm.zip'))
         searchzipfile = source.lower() + '.' + section + '.htm'
         with ZipFile(cachezipsourcefile, mode="r") as zfile:
             with zfile.open(searchzipfile) as f:
-                    html_cache_file = str(f.read()) 
-        cached_html_file = html_cache_file.split('\\r')
+                    html_cache_page = str(f.read()) 
+        cached_html_file = html_cache_page.split('\\r')
     except ValueError:
         print('ERROR: STATUTE NOT FOUND IN CACHE.')
 
-    next_row = 0
     for index, line in enumerate(cached_html_file):
         statute_paragraph = re.search(re_statute_pattern,line)
-        # ugly way to get effective date, check r_html for req get format
-        if(next_row == 1):
-            if(args.format[0] == 'h'):
-                print(line)
-            else:
-                html_parser.feed(line)
-                html_parser.close()
-                l =  html_parser.alldata.strip()
-                print(l)
-            next_row -=1
-            break
+
         if(statute_paragraph):
-            if(args.format[0] == 'h'):
-                print(line)
-            else:
-                html_parser.feed(line)
-                html_parser.close()
-            next_row +=1
+            statute_html = cached_html_file[index]
+            statute_effective_date_html = cached_html_file[index + 1]
+
+            return statute_html, statute_effective_date_html 
+
+    else: return None, None
+
+
 def cache_query_dir(source, statute):
 
     source = args.source[0]
@@ -306,8 +297,8 @@ if(args.extract_cache):
 
 match (args.query[0]):
     case 'w':
-        web_query()
+        web_query(args.source[0], args.statute[0])
     case 'czip':
-        cache_query_zip(args.source[0], args.statute[0])
+        statute, eff_date = cache_query_zip(args.source[0], args.statute[0])
     case 'cdir':
         cache_query_dir(args.source[0], args.statute[0])

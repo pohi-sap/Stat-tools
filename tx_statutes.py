@@ -50,9 +50,9 @@ args = arg_parser.parse_args()
 html_parser = MyHTMLParser()
 
 # Web request
-def web_query(source, statute):
+def web_query(source : str, statute : str) -> str:
     """
-    Given inputs, does an https request for the statute text
+    Given inputs, performs https request to return statute and effective date in html
     """
 
     section = statute.split('.')[0]
@@ -63,28 +63,16 @@ def web_query(source, statute):
     r = requests.get(url_base_string)
     r_html = r.text.split('\r') # gives statute followed by effective date, buffered by '\r\n' line between each statute
 
-    next_row = 0
     for index, line in enumerate(r_html):
         statute_paragraph = re.search(re_statute_pattern,line)
-        # ugly way to get effective date, check r_html for req get format below
-        if(next_row == 1):
-            if(args.format[0] == 'h'):# do this if html is requested
-                print(line)
-            else:
-                html_parser.feed(line)
-                html_parser.close()
-                print(html_parser.alldata.strip())
-            next_row -=1
-            break
-        # ^ ugly way to get effective date, check r_html for req get format above
 
-        if(statute_paragraph): # here we used regex and found the statute.
-            if(args.format[0] == 'h'): # do this if html is requested
-                print(line)
-            else:
-                html_parser.feed(line)
-                html_parser.close()
-            next_row +=1 # dumb way to also get the effective date/amend info for the statute
+        if(statute_paragraph):
+            statute_html = r_html[index]
+            statute_effective_date_html = r_html[index + 1]
+
+            return statute_html, statute_effective_date_html 
+
+    else: return None, None
 
 def download_files(url):
     response = requests.get(url)
@@ -99,7 +87,10 @@ def download_files(url):
         file.write(response.content)
     print(f"Downloaded file {filename}")
 
-def cache_query_zip(source, statute):
+def cache_query_zip(source : str, statute : str) -> str:
+    """
+    Given inputs, performs local lookup in zip files to return statute and effective date in html
+    """
 
     section = statute.split('.')[0]
 
@@ -127,7 +118,7 @@ def cache_query_zip(source, statute):
         searchzipfile = source.lower() + '.' + section + '.htm'
         with ZipFile(cachezipsourcefile, mode="r") as zfile:
             with zfile.open(searchzipfile) as f:
-                    html_cache_page = str(f.read()) 
+                    html_cache_page = str(f.read()).replace('\\n', '') # im getting extra \n not sure why here.
         cached_html_file = html_cache_page.split('\\r')
     except ValueError:
         print('ERROR: STATUTE NOT FOUND IN CACHE.')
@@ -144,30 +135,31 @@ def cache_query_zip(source, statute):
     else: return None, None
 
 
-def cache_query_dir(source, statute):
-
-    source = args.source[0]
-    statute = args.statute[0]
-    section = statute.split('.')[0]
-
-    re_statute_pattern = f'name="{statute}"'
+def cache_query_dir(source : str, statute : str) -> str:
+    """
+    Given inputs, performs local lookup in expanded files to return statute and effective date in html
+    """
 
     subdirectory = './statute_cache_extracted'
 
+    html_cache_file = ''
+    section = statute.split('.')[0]
+    re_statute_pattern = f'name="{statute}"'
+
     # check if we even have this yet, if not, ask to create!
     if not os.path.isdir(subdirectory):
-        print('Existing statute dump folder not found')
-        s = input('Do you want to create the flat directory with many statute htm files now? ~199MB [Y/n] ')
+
+        print('Existing zip-expanded statute folder {} not found'.format(subdirectory))
+        s = input('Do you want to create the zip-expanded directory {} with statute zip files now? ~199MB [Y/n] '.format(subdirectory))
+
         if(s == 'Y' or s == 'y'):
             print('Creating cache, then continuing with searching for statute.')
             extract_cache()
+
         else:
             print('No cache created, exiting')
             sys.exit(0)
 
-    html_cache_file = ''
-    # open zip first ##.htm.zip
-    # open statute file next ##.###.htm
     try: 
         searchzipfile = os.path.join(subdirectory, (source.lower() + '.' + section + '.htm'))
 
@@ -177,26 +169,16 @@ def cache_query_dir(source, statute):
     except ValueError:
         print('ERROR: STATUTE NOT FOUND IN dir CACHE.')
 
-    next_row = 0
     for index, line in enumerate(cached_html_file):
         statute_paragraph = re.search(re_statute_pattern,line)
-        # ugly way to get effective date, check r_html for req get format
-        if(next_row == 1):
-            if(args.format[0] == 'h'):
-                print(line)
-            else:
-                html_parser.feed(line)
-                html_parser.close()
-                print(html_parser.alldata.strip())
-            next_row -=1
-            break
+
         if(statute_paragraph):
-            if(args.format[0] == 'h'):
-                print(line)
-            else:
-                html_parser.feed(line)
-                html_parser.close()
-            next_row +=1
+            statute_html = cached_html_file[index]
+            statute_effective_date_html = cached_html_file[index + 1]
+
+            return statute_html, statute_effective_date_html 
+
+    else: return None, None
 
 def make_cache():
     #use 'https://statutes.capitol.texas.gov/Docs/Zips/SD.htm.zip' for reference
@@ -297,8 +279,17 @@ if(args.extract_cache):
 
 match (args.query[0]):
     case 'w':
-        web_query(args.source[0], args.statute[0])
+        statute, eff_date = web_query(args.source[0], args.statute[0])
+        print(statute)
+        print()
+        print(eff_date)
     case 'czip':
         statute, eff_date = cache_query_zip(args.source[0], args.statute[0])
+        print(statute)
+        print()
+        print(eff_date)
     case 'cdir':
-        cache_query_dir(args.source[0], args.statute[0])
+        statute, eff_date = cache_query_dir(args.source[0], args.statute[0])
+        print(statute)
+        print()
+        print(eff_date)

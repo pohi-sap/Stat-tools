@@ -1,5 +1,11 @@
 import sqlite3
 
+class _sqlite(object):
+
+    #def __init__(self, ):
+    #    pass
+    def giveinfo():
+        print("successfully instantiated db obj")
 
 def make_table(cur, source):
     print(f"Creating {source} table")
@@ -48,6 +54,7 @@ def main(source, statute, statute_text):
 source = 'tax_code'
 statute = '11.23'
 statute_text = 'statute text goes here'
-main(source, statute, statute_text)
+if __name__ == '__main__':
+    main(source, statute, statute_text)
 
 # find out how to handle connection + cursor in the correct way, using this file for clean operations.

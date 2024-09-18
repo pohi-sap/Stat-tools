@@ -15,38 +15,6 @@ class MyHTMLParser(HTMLParser):
 
     def handle_data(self, data):
         self.alldata += data 
-source = { 'The Texas Constitution': 'CN', 'Agriculture Code': 'AG', 'Alcoholic Beverage Code': 'AL', 'Auxillary Water Laws': 'AL', 'Business Organizations Code': 'BO', 'Business and Commerce Code': 'BC', 'Civil practice and Remedies Code': 'CP', 'Code of Criminal Procedure': 'CR', 'Education Code': 'ED', 'Election Code': 'EL', 'Estates Code': 'ES', 'Family Code': 'FA', 'Finance Code': 'FI', 'Government Code': 'GV', 'Health and Safety Code': 'HS', 'Human Resources Code': 'HR', 'Insurance Code - Not Codified': 'I1', 'Insurance Code': 'IN', 'Labor Code': 'LA', 'Local Government Code': 'LG', 'Natural Resources Code': 'NR', 'Occupations Code': 'OC', 'Parks and Wildlife Code': 'PW', 'Penal Code': 'PE', 'Property Code': 'PR', 'Special District Local Laws Code': 'SD', 'Tax Code': 'TX', 'Transportation Code': 'TN', 'Utilities Code': 'UT', 'Water Code': 'WA', 'Vernons Civil Laws': 'CV', }
-
-arg_parser = argparse.ArgumentParser(
-                    prog='tx_statutes',
-                    description='Gets Texas Statute information for source and statute provided',
-                    epilog='')
-
-arg_parser.add_argument('-l','--list-sources',
-                        action='store_true',
-                    help='Shows a list of Sources to choose from.')
-arg_parser.add_argument('-c','--create-cache',
-                        action='store_true',
-                    help='Create cache file dir \'statute_cache\' in this directory for use with local statute search')
-arg_parser.add_argument('-e','--extract-cache',
-                        action='store_true',
-                    help='Extract ZIPS from cache folder dir \'statute_cache\' output to statute_cache_extracted')
-
-arg_parser.add_argument('-s','--source',
-                        metavar='TN', type=str, nargs=1,
-                    help='Set statute source.')
-
-arg_parser.add_argument('-t','--statute',
-                        metavar='544.007', type=str, nargs=1, 
-                    help='Set statute number.')
-arg_parser.add_argument('-f','--format',
-                        metavar='t', type=str, nargs=1, default='t',
-                    help='Choose output format. [-h] html, [-t] text(Default).')
-arg_parser.add_argument('-q','--query',
-                        metavar='czip', type=str, nargs=1, default=['czip'],
-                    help='Choose data source web or cache [-w] web request, [-czip] cache zip directory(Default) [-cdir] cache unzipped directory.')
-
-args = arg_parser.parse_args()
 
 # Web request
 def web_query(source : str, statute : str) -> str:
@@ -255,44 +223,99 @@ def extract_cache():
         print(f'Extracting {index + 1}/{len(zip_filenames)} - {file} to {subdirectory_extracted}')
         with ZipFile(file, mode="r") as zfile:
             zfile.extractall(path=subdirectory_extracted)
-def output_conversion(input_html : str) -> str:
-    html_parser = MyHTMLParser()
-    html_parser.feed(input_html)
-    text = html_parser.alldata
-    return text
+def text_to_sql(statute_text : str) -> str:
+    """
+    Transforms text to a list of sql inserted as rows.
+    """
+    pattern = r'\(.\)'
+
+
+def output_conversion(input_html : str, _format : str) -> str:
+    match (_format):
+        case 'text':
+            html_parser = MyHTMLParser()
+            html_parser.feed(input_html)
+            text = html_parser.alldata
+            return text
+        case 'h':
+            return input_html
+        case 'sqlite':
+            # best would be list or dict that has statute title and subsections divided out the correct way.
+            return "sqlite formatting here :)"
 
 
 # cli stuff here
+def main():
 
-if (not len(sys.argv) > 1):
-    arg_parser.print_help()
-    sys.exit(0)
 
-if(args.list_sources):
-    for s in source:
-        print(f'{source[s]} - {s}')
-    sys.exit(0)
-if(args.create_cache):
-    print('Creating some cache now!')
-    make_cache()
 
-if(args.extract_cache):
-    extract_cache()
-    sys.exit()
+    source = { 'The Texas Constitution': 'CN', 'Agriculture Code': 'AG', 'Alcoholic Beverage Code': 'AL', 'Auxillary Water Laws': 'AL', 'Business Organizations Code': 'BO', 'Business and Commerce Code': 'BC', 'Civil practice and Remedies Code': 'CP', 'Code of Criminal Procedure': 'CR', 'Education Code': 'ED', 'Election Code': 'EL', 'Estates Code': 'ES', 'Family Code': 'FA', 'Finance Code': 'FI', 'Government Code': 'GV', 'Health and Safety Code': 'HS', 'Human Resources Code': 'HR', 'Insurance Code - Not Codified': 'I1', 'Insurance Code': 'IN', 'Labor Code': 'LA', 'Local Government Code': 'LG', 'Natural Resources Code': 'NR', 'Occupations Code': 'OC', 'Parks and Wildlife Code': 'PW', 'Penal Code': 'PE', 'Property Code': 'PR', 'Special District Local Laws Code': 'SD', 'Tax Code': 'TX', 'Transportation Code': 'TN', 'Utilities Code': 'UT', 'Water Code': 'WA', 'Vernons Civil Laws': 'CV', }
 
-match (args.query[0]):
-    case 'w':
-        statute, eff_date = web_query(args.source[0], args.statute[0])
-        print(output_conversion(statute))
-        print()
-        print(output_conversion(eff_date))
-    case 'czip':
-        statute, eff_date = cache_query_zip(args.source[0], args.statute[0])
-        print(output_conversion(statute))
-        print()
-        print(output_conversion(eff_date))
-    case 'cdir':
-        statute, eff_date = cache_query_dir(args.source[0], args.statute[0])
-        print(output_conversion(statute))
-        print()
-        print(output_conversion(eff_date))
+    arg_parser = argparse.ArgumentParser(
+                        prog='tx_statutes',
+                        description='Gets Texas Statute information for source and statute provided',
+                        epilog='')
+
+    arg_parser.add_argument('-l','--list-sources',
+                            action='store_true',
+                        help='Shows a list of Sources to choose from.')
+    arg_parser.add_argument('-c','--create-cache',
+                            action='store_true',
+                        help='Create cache file dir \'statute_cache\' in this directory for use with local statute search')
+    arg_parser.add_argument('-e','--extract-cache',
+                            action='store_true',
+                        help='Extract ZIPS from cache folder dir \'statute_cache\' output to statute_cache_extracted')
+
+    arg_parser.add_argument('-s','--source',
+                            metavar='TN', type=str, nargs=1,
+                        help='Set statute source.')
+
+    arg_parser.add_argument('-t','--statute',
+                            metavar='544.007', type=str, nargs=1, 
+                        help='Set statute number.')
+    arg_parser.add_argument('-f','--format',
+                            metavar='t', type=str, nargs=1, default='t',
+                        help='Choose output format. [-h] html, [-t] text(Default).')
+    arg_parser.add_argument('-q','--query',
+                            metavar='czip', type=str, nargs=1, default=['czip'],
+                        help='Choose data source web or cache [-w] web request, [-czip] cache zip directory(Default) [-cdir] cache unzipped directory.')
+
+    args = arg_parser.parse_args()
+
+# Control for flags
+
+    if (not len(sys.argv) > 1):
+        arg_parser.print_help()
+        sys.exit(0)
+
+    if(args.list_sources):
+        for s in source:
+            print(f'{source[s]} - {s}')
+        sys.exit(0)
+    if(args.create_cache):
+        print('Creating some cache now!')
+        make_cache()
+
+    if(args.extract_cache):
+        extract_cache()
+        sys.exit()
+
+    match (args.query[0]):
+        case 'w':
+            statute, eff_date = web_query(args.source[0], args.statute[0])
+            print(output_conversion(statute,'text'))
+            print()
+            print(output_conversion(eff_date,'text'))
+        case 'czip':
+            statute, eff_date = cache_query_zip(args.source[0], args.statute[0])
+            print(output_conversion(statute,'text'))
+            print()
+            print(output_conversion(eff_date,'text'))
+        case 'cdir':
+            statute, eff_date = cache_query_dir(args.source[0], args.statute[0])
+            print(output_conversion(statute,'text'))
+            print()
+            print(output_conversion(eff_date,'text'))
+
+if __name__ == '__main__':
+    main()

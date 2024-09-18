@@ -47,7 +47,6 @@ arg_parser.add_argument('-q','--query',
                     help='Choose data source web or cache [-w] web request, [-czip] cache zip directory(Default) [-cdir] cache unzipped directory.')
 
 args = arg_parser.parse_args()
-html_parser = MyHTMLParser()
 
 # Web request
 def web_query(source : str, statute : str) -> str:
@@ -73,7 +72,6 @@ def web_query(source : str, statute : str) -> str:
             return statute_html, statute_effective_date_html 
 
     else: return None, None
-
 def download_files(url):
     response = requests.get(url)
     subdirectory = './statute_cache'
@@ -257,6 +255,11 @@ def extract_cache():
         print(f'Extracting {index + 1}/{len(zip_filenames)} - {file} to {subdirectory_extracted}')
         with ZipFile(file, mode="r") as zfile:
             zfile.extractall(path=subdirectory_extracted)
+def output_conversion(input_html : str) -> str:
+    html_parser = MyHTMLParser()
+    html_parser.feed(input_html)
+    text = html_parser.alldata
+    return text
 
 
 # cli stuff here
@@ -280,16 +283,16 @@ if(args.extract_cache):
 match (args.query[0]):
     case 'w':
         statute, eff_date = web_query(args.source[0], args.statute[0])
-        print(statute)
+        print(output_conversion(statute))
         print()
-        print(eff_date)
+        print(output_conversion(eff_date))
     case 'czip':
         statute, eff_date = cache_query_zip(args.source[0], args.statute[0])
-        print(statute)
+        print(output_conversion(statute))
         print()
-        print(eff_date)
+        print(output_conversion(eff_date))
     case 'cdir':
         statute, eff_date = cache_query_dir(args.source[0], args.statute[0])
-        print(statute)
+        print(output_conversion(statute))
         print()
-        print(eff_date)
+        print(output_conversion(eff_date))

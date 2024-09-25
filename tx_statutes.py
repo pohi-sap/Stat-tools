@@ -223,11 +223,25 @@ def extract_cache():
         print(f'Extracting {index + 1}/{len(zip_filenames)} - {file} to {subdirectory_extracted}')
         with ZipFile(file, mode="r") as zfile:
             zfile.extractall(path=subdirectory_extracted)
-def text_to_sql(statute_text : str) -> str:
+
+def text_to_sql(statute_text):
     """
     Transforms text to a list of sql inserted as rows.
     """
-    pattern = r'\(.\)'
+    #pattern = r'^\(([^()]+)\)'
+    pattern = r'^\(.*?\)'
+    l = statute_text.split('\n')
+    formatted_statute =  list(filter(None, l))
+    subsections = []
+    for i in formatted_statute:
+        m = re.match(pattern,i)
+        if(m):
+            subsections.append(m.group(0))
+    statute_row_count = len(formatted_statute)
+    if(len(subsections) > 1):
+        subsections.insert(0,'a')
+    subsections_csv_formatted = ','.join(subsections) # .replace('(','').replace(')', ',')
+    return formatted_statute, statute_row_count, subsections_csv_formatted
 
 
 def output_conversion(input_html : str, _format : str) -> str:
@@ -303,14 +317,29 @@ def main():
     match (args.query[0]):
         case 'w':
             statute, eff_date = web_query(args.source[0], args.statute[0])
-            print(output_conversion(statute,'text'))
-            print()
-            print(output_conversion(eff_date,'text'))
+            #print(output_conversion(statute,'text'))
+            #print()
+            #print(output_conversion(eff_date,'text'))
+            
+            l, sl, subsec = text_to_sql(output_conversion(statute,'text'))
+            print(sl)
+            for i, _ in enumerate(l):
+                print('{}:{}'.format(i,_))
+            print(subsec)
+
         case 'czip':
             statute, eff_date = cache_query_zip(args.source[0], args.statute[0])
-            print(output_conversion(statute,'text'))
-            print()
-            print(output_conversion(eff_date,'text'))
+            #print(output_conversion(statute,'text'))
+            #print()
+            #print(output_conversion(eff_date,'text'))
+
+            l, sl, subsec = text_to_sql(output_conversion(statute,'text'))
+            print(sl)
+            for i, _ in enumerate(l):
+                print('{}:{}'.format(i,_))
+            print(subsec)
+
+
         case 'cdir':
             statute, eff_date = cache_query_dir(args.source[0], args.statute[0])
             print(output_conversion(statute,'text'))

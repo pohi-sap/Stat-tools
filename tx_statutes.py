@@ -240,6 +240,7 @@ def convert_text_to_sql(statute_text: str) -> tuple[list[str], int, str]:
     subsections_pattern = r'\(([^)]+)\)'
     # Split the text into lines
     lines = [line.strip() for line in statute_text.split('\n') if line]
+    statute_title = ''
 
     # Find subsections
     subsections = []
@@ -251,11 +252,23 @@ def convert_text_to_sql(statute_text: str) -> tuple[list[str], int, str]:
     # Join subsections into a CSV-formatted string
     csv_subsections = ','.join(subsections)
 
-    # Find Statute title
-    statute_title_pattern = r'Sec. \d\.\d \w\.?'
+    # Find Statute title using regex
+
+    #raw string format                              r
+    #Match sec follow by stat digits and period     'Sec.*\d+\.\d+\.
+    #match min spaces                               \s+
+    #match uppercase words, spaces and hyphen       ([A-Z -]+)
+    #end match on period                            \.'
+
+    statute_title_pattern = r'Sec.*\d+\.\d+\.\s+([A-Z -]+)\.'
+
+    for ln in lines[:3]:
+        match = re.search(statute_title_pattern, ln)
+        if match:
+            statute_title = match.group(1)
 
 
-    return lines, len(lines), csv_subsections
+    return lines, len(lines), statute_title, csv_subsections
 
 def output_conversion(input_html : str, _format : str) -> str:
     match (_format):
@@ -346,11 +359,12 @@ def main():
             #print()
             #print(output_conversion(eff_date,'text'))
 
-            l, sl, subsec = convert_text_to_sql(output_conversion(statute,'text'))
+            l, sl, statute_title, subsec = convert_text_to_sql(output_conversion(statute,'text'))
             print(sl)
             for i, _ in enumerate(l):
                 print('{}:{}'.format(i,_))
-            print(subsec)
+            print(f'Statute Title: {statute_title}')
+            print(f'Statute Subsections: {subsec}')
 
 
         case 'cdir':

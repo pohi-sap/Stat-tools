@@ -224,25 +224,38 @@ def extract_cache():
         with ZipFile(file, mode="r") as zfile:
             zfile.extractall(path=subdirectory_extracted)
 
-def text_to_sql(statute_text):
+def convert_text_to_sql(statute_text: str) -> tuple[list[str], int, str]:
     """
-    Transforms text to a list of sql inserted as rows.
-    """
-    #pattern = r'^\(([^()]+)\)'
-    pattern = r'^\(.*?\)'
-    l = statute_text.split('\n')
-    formatted_statute =  list(filter(None, l))
-    subsections = []
-    for i in formatted_statute:
-        m = re.match(pattern,i)
-        if(m):
-            subsections.append(m.group(0))
-    statute_row_count = len(formatted_statute)
-    if(len(subsections) > 1):
-        subsections.insert(0,'a')
-    subsections_csv_formatted = ','.join(subsections) # .replace('(','').replace(')', ',')
-    return formatted_statute, statute_row_count, subsections_csv_formatted
+    Transforms text to a list of SQL inserted as rows.
 
+    Args:
+        statute_text (str): The text to be transformed.
+
+    Returns:
+        tuple[list[str], int, str]: A tuple containing the formatted statute,
+            the row count, and the CSV-formatted subsections.
+    """
+
+    # Define patterns for matching parentheses
+    subsections_pattern = r'\(([^)]+)\)'
+    # Split the text into lines
+    lines = [line.strip() for line in statute_text.split('\n') if line]
+
+    # Find subsections
+    subsections = []
+    for line in lines:
+        match = re.search(subsections_pattern, line)
+        if match:
+            subsections.append(match.group(1))
+
+    # Join subsections into a CSV-formatted string
+    csv_subsections = ','.join(subsections)
+
+    # Find Statute title
+    statute_title_pattern = r'Sec. \d\.\d \w\.?'
+
+
+    return lines, len(lines), csv_subsections
 
 def output_conversion(input_html : str, _format : str) -> str:
     match (_format):
@@ -321,7 +334,7 @@ def main():
             #print()
             #print(output_conversion(eff_date,'text'))
             
-            l, sl, subsec = text_to_sql(output_conversion(statute,'text'))
+            l, sl, subsec = convert_text_to_sql(output_conversion(statute,'text'))
             print(sl)
             for i, _ in enumerate(l):
                 print('{}:{}'.format(i,_))
@@ -333,7 +346,7 @@ def main():
             #print()
             #print(output_conversion(eff_date,'text'))
 
-            l, sl, subsec = text_to_sql(output_conversion(statute,'text'))
+            l, sl, subsec = convert_text_to_sql(output_conversion(statute,'text'))
             print(sl)
             for i, _ in enumerate(l):
                 print('{}:{}'.format(i,_))

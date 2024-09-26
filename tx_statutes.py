@@ -236,16 +236,21 @@ def convert_text_to_sql(statute_text: str) -> tuple[list[str], int, str]:
             the row count, and the CSV-formatted subsections.
     """
 
-    # Define patterns for matching parentheses
-    subsections_pattern = r'\(([^)]+)\)'
     # Split the text into lines
     lines = [line.strip() for line in statute_text.split('\n') if line]
     statute_title = ''
 
+    # regex, explained
+    subsections_re = re.compile(r"""\(                      # find first open parenthesis
+                                            (               # start group
+                                            [^)]+           # include anything that is not a closing parenthesis
+                                            )               # close group :)
+                                            \)""", re.X)    # end on closed parenthesis
+
     # Find subsections
     subsections = []
     for line in lines:
-        match = re.search(subsections_pattern, line)
+        match = subsections_re.search(line)
         if match:
             subsections.append(match.group(1))
 
@@ -254,16 +259,18 @@ def convert_text_to_sql(statute_text: str) -> tuple[list[str], int, str]:
 
     # Find Statute title using regex
 
-    #raw string format                              r
-    #Match sec follow by stat digits and period     'Sec.*\d+\.\d+\.
-    #match min spaces                               \s+
-    #match uppercase words, spaces and hyphen       ([A-Z -]+)
-    #end match on period                            \.'
-
-    statute_title_pattern = r'Sec.*\d+\.\d+\.\s+([A-Z -]+)\.'
+    # regex, explained
+    statute_title_re = re.compile(r"""Sec.*     # Look for 'Sec'
+                                            \d+ # Check for first part of statute number
+                                            \.  # statute number separated by '.'
+                                            \d+ # End part of statute number
+                                            \.  # Statute is followed by a '.'
+                                            \s+ # Fly through any spaces
+                                            ([A-Z -]+) # This is title of statute, has spaces and sometimes hyphens!
+                                            \.""", re.X)
 
     for ln in lines[:3]:
-        match = re.search(statute_title_pattern, ln)
+        match = statute_title_re.search(ln)
         if match:
             statute_title = match.group(1)
 
@@ -360,10 +367,11 @@ def main():
             #print(output_conversion(eff_date,'text'))
 
             l, sl, statute_title, subsec = convert_text_to_sql(output_conversion(statute,'text'))
-            print(sl)
             for i, _ in enumerate(l):
                 print('{}:{}'.format(i,_))
+            print(output_conversion(eff_date,'text'))
             print(f'Statute Title: {statute_title}')
+            print(f'Statute Line Count: {sl}')
             print(f'Statute Subsections: {subsec}')
 
 

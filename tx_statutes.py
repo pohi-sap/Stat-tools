@@ -84,7 +84,7 @@ def cache_query_zip(source : str, statute : str) -> str:
         searchzipfile = source.lower() + '.' + section + '.htm'
         with ZipFile(cachezipsourcefile, mode="r") as zfile:
             with zfile.open(searchzipfile) as f:
-                    html_cache_page = str(f.read()).replace('\\n', '') # im getting extra \n not sure why here.
+                html_cache_page = str(f.read()).replace('\\n', '').replace(r"\'","'") # im getting extra \n not sure why here. # replace \' also messing things up for me, personally >:|
         cached_html_file = html_cache_page.split('\\r')
     except ValueError:
         print('ERROR: STATUTE NOT FOUND IN CACHE.')

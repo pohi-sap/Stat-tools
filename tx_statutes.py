@@ -11,7 +11,8 @@ class MyHTMLParser(HTMLParser):
     alldata = ''
 
     def handle_starttag(self, tag, attrs):
-        if(tag == 'p' and len(attrs) > 1): # we 'break' on p tags because statutes are separtaed into <p> tags, then len check cuts out white space of the output.
+        #if(tag == 'p' and len(attrs) > 1): # we 'break' on p tags because statutes are separtaed into <p> tags, then len check cuts out white space of the output.
+        if(tag == 'p'): # we 'break' on p tags because statutes are separtaed into <p> tags
             self.alldata += '\n'
 
     # include <br> for formatting.
@@ -19,8 +20,35 @@ class MyHTMLParser(HTMLParser):
         if(tag == 'br'): # we 'break' on p tags because statutes are separtaed into <p> tags, then len check cuts out white space of the output.
             self.alldata += '\n'
 
+    #try to structure tables correctly.
+    #def handle_endtag(self, tag):
+    #    if(tag == 'th'): # we format on table tags because of TX 11.22
+    #        self.alldata += '\t'
+
+    # This has no effect, missing attrs so it doesnt actually perform action of appending \t to the html.
+    #def handle_endtag(self, tag):
+    #    if(tag == 'td'): # we format on table tags because of TX 11.22
+    #        self.alldata += '\t'
+    
+
+    # this doesnt work, i dont know why and it makes me sad :(
+    # starttag,     +attrs formats the table, ish, but ruins the rest of the output, 
+    # starttag,     -attrs Type error here, says the thing is expecting 3 args.
+    # endttag,      +attrs does not format the table, but rest of the output is NOT ruined.
+    # endttag,      -attrs no tabs added to table.
+
+    #include table formatting.
+    def handle_endtag(self, tag, attrs):
+        if(tag == 'tr'): # we format on table tags because of TX 11.22
+            self.alldata += '\n'
+
+    def handle_endtag(self, tag):
+        if(tag == 'td'): # we format on table tags because of TX 11.22
+            self.alldata += '\t'
+
     def handle_data(self, data):
         self.alldata += data 
+
 
 # Web request
 def web_query(source : str, statute : str) -> str:
@@ -361,11 +389,10 @@ def main():
             #print()
             #print(output_conversion(eff_date,'text'))
             
-            l, sl, subsec = convert_text_to_sql(output_conversion(statute,'text'))
-            print(sl)
-            for i, _ in enumerate(l):
-                print('{}:{}'.format(i,_))
-            print(subsec)
+            lines, line_count, statute_title, subsec = convert_text_to_sql(output_conversion(statute,'text'))
+            for line in lines:
+                print('{}'.format(line))
+            print(output_conversion(eff_date,'text'))
 
         case 'czip':
             statute, eff_date = cache_query_zip(args.source[0], args.statute[0])
@@ -373,20 +400,22 @@ def main():
             #print()
             #print(output_conversion(eff_date,'text'))
 
-            l, sl, statute_title, subsec = convert_text_to_sql(output_conversion(statute,'text'))
-            for i, _ in enumerate(l):
-                print('{}:{}'.format(i,_))
-            print(output_conversion(eff_date,'text'))
-            print(f'Statute Title: {statute_title}')
-            print(f'Statute Line Count: {sl}')
-            print(f'Statute Subsections: {subsec}')
-
+            lines, line_count, statute_title, subsec = convert_text_to_sql(output_conversion(statute,'text'))
+            for i, line in enumerate(lines):
+                print('{}:{}'.format(i, line))
+            print(f'Statute_title: {statute_title}')
+            print(f'Line_count: {line_count}')
+            print(f'Subsections: {subsec}')
 
         case 'cdir':
             statute, eff_date = cache_query_dir(args.source[0], args.statute[0])
-            print(output_conversion(statute,'text'))
-            print()
-            print(output_conversion(eff_date,'text'))
+            #print(output_conversion(statute,'text'))
+            #print()
+            #print(output_conversion(eff_date,'text'))
+
+            lines, line_count, statute_title, subsec = convert_text_to_sql(output_conversion(statute,'text'))
+            for line in lines:
+                print('{}'.format(line))
 
 if __name__ == '__main__':
     main()

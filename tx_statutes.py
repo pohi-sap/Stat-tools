@@ -9,8 +9,14 @@ import os
 
 class MyHTMLParser(HTMLParser):
     alldata = ''
+
     def handle_starttag(self, tag, attrs):
         if(tag == 'p' and len(attrs) > 1): # we 'break' on p tags because statutes are separtaed into <p> tags, then len check cuts out white space of the output.
+            self.alldata += '\n'
+
+    # include <br> for formatting.
+    def handle_startendtag(self, tag, attrs):
+        if(tag == 'br'): # we 'break' on p tags because statutes are separtaed into <p> tags, then len check cuts out white space of the output.
             self.alldata += '\n'
 
     def handle_data(self, data):
@@ -269,10 +275,11 @@ def convert_text_to_sql(statute_text: str) -> tuple[list[str], int, str]:
                                             ([A-Z -]+) # This is title of statute, has spaces and sometimes hyphens!
                                             \.""", re.X)
 
-    for ln in lines[:3]:
+    for ln in lines:
         match = statute_title_re.search(ln)
         if match:
             statute_title = match.group(1)
+            break
 
 
     return lines, len(lines), statute_title, csv_subsections

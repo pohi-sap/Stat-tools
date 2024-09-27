@@ -3,13 +3,7 @@
 
 
 
-## Planned features: 
-
-- [ ] json output [requested](https://github.com/pohi-sap/Stat-tools/issues/1)
-
-
-
-## Get Help with this CLI tool or just look around 😊
+## Introduce yourself to the tool 😊
 ```bash
 python tx_statutes.py -h
 ```

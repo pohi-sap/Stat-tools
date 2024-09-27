@@ -340,13 +340,13 @@ def main():
 
     arg_parser.add_argument('-l','--list-sources',
                             action='store_true',
-                        help='Shows a list of Sources to choose from.')
+                        help='Shows a list of Texas Statute Sources to use.')
     arg_parser.add_argument('-c','--create-cache',
                             action='store_true',
                         help='Create cache file dir \'statute_cache\' in this directory for use with local statute search')
     arg_parser.add_argument('-e','--extract-cache',
                             action='store_true',
-                        help='Extract ZIPS from cache folder dir \'statute_cache\' output to statute_cache_extracted')
+                        help='Extract ZIPS from cache folder dir \'statute_cache\' and outputs to statute_cache_extracted')
 
     arg_parser.add_argument('-s','--source',
                             metavar='TN', type=str, nargs=1,
@@ -357,10 +357,10 @@ def main():
                         help='Set statute number.')
     arg_parser.add_argument('-f','--format',
                             metavar='t', type=str, nargs=1, default='t',
-                        help='Choose output format. [-h] html, [-t] text(Default).')
+                        help='Choose output format, [-f html], [-f t] text(Default).')
     arg_parser.add_argument('-q','--query',
                             metavar='czip', type=str, nargs=1, default=['czip'],
-                        help='Choose data source web or cache [-w] web request, [-czip] cache zip directory(Default) [-cdir] cache unzipped directory.')
+                        help='Choose data source, [-q w] web request or [-q czip] cache zip directory(Default), [-q cdir] cache unzipped directory.')
 
     args = arg_parser.parse_args()
 

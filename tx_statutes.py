@@ -75,7 +75,10 @@ def web_query(source : str, statute : str) -> str:
 
             return statute_html, statute_effective_date_html 
 
-    else: return None, None
+    print('Source \'{}\' and statute \'{}\' did not yield any results'.format(source,statute))
+    sys.exit(1)
+
+
 def download_files(url):
     response = requests.get(url)
     subdirectory = './statute_cache'
@@ -133,7 +136,8 @@ def cache_query_zip(source : str, statute : str) -> str:
             statute_effective_date_html = cached_html_file[index + 1]
 
             return statute_html, statute_effective_date_html 
-
+    print('Source \'{}\' and statute \'{}\' did not yield any results'.format(source,statute))
+    sys.exit(1)
 
 def cache_query_dir(source : str, statute : str) -> str:
     """
@@ -178,7 +182,9 @@ def cache_query_dir(source : str, statute : str) -> str:
 
             return statute_html, statute_effective_date_html 
 
-    else: return None, None
+    else: 
+        print('Source \'{}\' and statute \'{}\' did not yield any results'.format(source,statute))
+        sys.exit(1)
 
 def make_cache():
     #use 'https://statutes.capitol.texas.gov/Docs/Zips/SD.htm.zip' for reference

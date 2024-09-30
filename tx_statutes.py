@@ -8,6 +8,7 @@ import re
 import os
 
 class MyHTMLParser(HTMLParser):
+    # TODO replace with in-memory string builder thing.
     alldata = ''
 
     def handle_starttag(self, tag, attrs):
@@ -18,6 +19,7 @@ class MyHTMLParser(HTMLParser):
     # include <br> for formatting.
     def handle_startendtag(self, tag, attrs):
         if(tag == 'br'): # we 'break' on p tags because statutes are separtaed into <p> tags, then len check cuts out white space of the output.
+            print('I see a br!')
             self.alldata += '\n'
 
     #try to structure tables correctly.
@@ -113,26 +115,24 @@ def cache_query_zip(source : str, statute : str) -> str:
             print('No cache created, exiting')
             sys.exit(0)
 
-    try: 
-        cachezipsourcefile = os.path.join(subdirectory, (source.upper() + '.htm.zip'))
-        searchzipfile = source.lower() + '.' + section + '.htm'
-        with ZipFile(cachezipsourcefile, mode="r") as zfile:
-            with zfile.open(searchzipfile) as f:
-                html_cache_page = str(f.read()).replace('\\n', '').replace(r"\'","'") # im getting extra \n not sure why here. # replace \' also messing things up for me, personally >:|
-        cached_html_file = html_cache_page.split('\\r')
-    except ValueError:
-        print('ERROR: STATUTE NOT FOUND IN CACHE.')
+        try: 
+            cachezipsourcefile = os.path.join(subdirectory, (source.upper() + '.htm.zip'))
+            searchzipfile = source.lower() + '.' + section + '.htm'
+            with ZipFile(cachezipsourcefile, mode="r") as zfile:
+                with zfile.open(searchzipfile) as f:
+                    html_cache_page = str(f.read()).replace('\\n', '').replace(r"\'","'") # im getting extra \n not sure why here. # replace \' also messing things up for me, personally >:|
+            cached_html_file = html_cache_page.split('\\r')
+        except ValueError:
+            print('ERROR: STATUTE NOT FOUND IN CACHE.')
 
-    for index, line in enumerate(cached_html_file):
-        statute_paragraph = re.search(re_statute_pattern,line)
+        for index, line in enumerate(cached_html_file):
+            statute_paragraph = re.search(re_statute_pattern,line)
 
-        if(statute_paragraph):
-            statute_html = cached_html_file[index]
-            statute_effective_date_html = cached_html_file[index + 1]
+            if(statute_paragraph):
+                statute_html = cached_html_file[index]
+                statute_effective_date_html = cached_html_file[index + 1]
 
-            return statute_html, statute_effective_date_html 
-
-    else: return None, None
+                return statute_html, statute_effective_date_html 
 
 
 def cache_query_dir(source : str, statute : str) -> str:
@@ -356,11 +356,11 @@ def main():
                             metavar='544.007', type=str, nargs=1, 
                         help='Set statute number.')
     arg_parser.add_argument('-f','--format',
-                            metavar='t', type=str, nargs=1, default='t',
-                        help='Choose output format, [-f html], [-f t] text(Default).')
+                            metavar='text', type=str, nargs=1, default='text',
+                        help='Choose output format, [-f html], [-f text] text(Default).')
     arg_parser.add_argument('-q','--query',
-                            metavar='czip', type=str, nargs=1, default=['czip'],
-                        help='Choose data source, [-q w] web request or [-q czip] cache zip directory(Default), [-q cdir] cache unzipped directory.')
+                            metavar='cache-zip', type=str, nargs=1, default=['cache-zip'],
+                        help='Choose data source, [-q web] web request or [-q cache-zip] cache zip directory(Default), [-q cache-flatdir] cache unzipped directory.')
 
     args = arg_parser.parse_args()
 
@@ -384,24 +384,24 @@ def main():
 
     match (args.query[0]):
         case 'web':
-            statute, eff_date = web_query(args.source[0], args.statute[0])
-            print(output_conversion(statute,'text'))
+            statute_html, eff_date_html = web_query(args.source[0], args.statute[0])
+            print(output_conversion(statute_html,'text'))
             print()
-            print(output_conversion(eff_date,'text'))
+            print(output_conversion(eff_date_html,'text'))
             
 
         case 'cache-zip':
-            statute, eff_date = cache_query_zip(args.source[0], args.statute[0])
-            print(output_conversion(statute,'text'))
+            statute_html, eff_date_html = cache_query_zip(args.source[0], args.statute[0])
+            print(output_conversion(statute_html,'text'))
             print()
-            print(output_conversion(eff_date,'text'))
+            print(output_conversion(eff_date_html,'text'))
 
 
         case 'cache-flatdir':
-            statute, eff_date = cache_query_dir(args.source[0], args.statute[0])
-            print(output_conversion(statute,'text'))
+            statute_html, eff_date_html = cache_query_dir(args.source[0], args.statute[0])
+            print(output_conversion(statute_html,'text'))
             print()
-            print(output_conversion(eff_date,'text'))
+            print(output_conversion(eff_date_html,'text'))
 
 if __name__ == '__main__':
     main()

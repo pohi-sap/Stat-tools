@@ -19,7 +19,6 @@ class MyHTMLParser(HTMLParser):
     # include <br> for formatting.
     def handle_startendtag(self, tag, attrs):
         if(tag == 'br'): # we 'break' on p tags because statutes are separtaed into <p> tags, then len check cuts out white space of the output.
-            print('I see a br!')
             self.alldata += '\n'
 
     #try to structure tables correctly.

@@ -99,9 +99,10 @@ Added by Acts 2011, 82nd Leg., R.S., Ch. 383 (S.B. 402), Sec. 2, eff. January 1,
 
 
 ## HTTP
-You can also do (an?/a?) web request instead of using cache.
 > [!WARNING]
 > Please don't do a lot of web queries because I don't know what the rate limit is on the Texas statutes website. You risk getting blocked. This is why the 'cache' method is default.
+
+You can also do (an?/a?) web request instead of using cache.
 This would be the done using the flag: `--query web`
 ```bash
 python tx_statutes.py --source tx --statute 11.1827 --query web

@@ -319,7 +319,7 @@ def output_conversion(input_html : str, _format : str) -> str:
             html_parser.feed(input_html)
             text = html_parser.alldata
             return text
-        case 'h':
+        case 'html':
             return input_html
         case 'sqlite':
             # best would be list or dict that has statute title and subsections divided out the correct way.
@@ -383,39 +383,25 @@ def main():
         sys.exit()
 
     match (args.query[0]):
-        case 'w':
+        case 'web':
             statute, eff_date = web_query(args.source[0], args.statute[0])
-            #print(output_conversion(statute,'text'))
-            #print()
-            #print(output_conversion(eff_date,'text'))
+            print(output_conversion(statute,'text'))
+            print()
+            print(output_conversion(eff_date,'text'))
             
-            lines, line_count, statute_title, subsec = convert_text_to_sql(output_conversion(statute,'text'))
-            for line in lines:
-                print('{}'.format(line))
+
+        case 'cache-zip':
+            statute, eff_date = cache_query_zip(args.source[0], args.statute[0])
+            print(output_conversion(statute,'text'))
+            print()
             print(output_conversion(eff_date,'text'))
 
-        case 'czip':
-            statute, eff_date = cache_query_zip(args.source[0], args.statute[0])
-            #print(output_conversion(statute,'text'))
-            #print()
-            #print(output_conversion(eff_date,'text'))
 
-            lines, line_count, statute_title, subsec = convert_text_to_sql(output_conversion(statute,'text'))
-            for i, line in enumerate(lines):
-                print('{}:{}'.format(i, line))
-            print(f'Statute_title: {statute_title}')
-            print(f'Line_count: {line_count}')
-            print(f'Subsections: {subsec}')
-
-        case 'cdir':
+        case 'cache-flatdir':
             statute, eff_date = cache_query_dir(args.source[0], args.statute[0])
-            #print(output_conversion(statute,'text'))
-            #print()
-            #print(output_conversion(eff_date,'text'))
-
-            lines, line_count, statute_title, subsec = convert_text_to_sql(output_conversion(statute,'text'))
-            for line in lines:
-                print('{}'.format(line))
+            print(output_conversion(statute,'text'))
+            print()
+            print(output_conversion(eff_date,'text'))
 
 if __name__ == '__main__':
     main()

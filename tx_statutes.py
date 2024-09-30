@@ -115,25 +115,24 @@ def cache_query_zip(source : str, statute : str) -> str:
             print('No cache created, exiting')
             sys.exit(0)
 
-    else:
-        try: 
-            cachezipsourcefile = os.path.join(subdirectory, (source.upper() + '.htm.zip'))
-            searchzipfile = source.lower() + '.' + section + '.htm'
-            with ZipFile(cachezipsourcefile, mode="r") as zfile:
-                with zfile.open(searchzipfile) as f:
-                    html_cache_page = str(f.read()).replace('\\n', '').replace(r"\'","'") # im getting extra \n not sure why here. # replace \' also messing things up for me, personally >:|
-            cached_html_file = html_cache_page.split('\\r')
-        except ValueError:
-            print('ERROR: STATUTE NOT FOUND IN CACHE.')
+    try: 
+        cachezipsourcefile = os.path.join(subdirectory, (source.upper() + '.htm.zip'))
+        searchzipfile = source.lower() + '.' + section + '.htm'
+        with ZipFile(cachezipsourcefile, mode="r") as zfile:
+            with zfile.open(searchzipfile) as f:
+                html_cache_page = str(f.read()).replace('\\n', '').replace(r"\'","'") # im getting extra \n not sure why here. # replace \' also messing things up for me, personally >:|
+        cached_html_file = html_cache_page.split('\\r')
+    except ValueError:
+        print('ERROR: STATUTE NOT FOUND IN CACHE.')
 
-        for index, line in enumerate(cached_html_file):
-            statute_paragraph = re.search(re_statute_pattern,line)
+    for index, line in enumerate(cached_html_file):
+        statute_paragraph = re.search(re_statute_pattern,line)
 
-            if(statute_paragraph):
-                statute_html = cached_html_file[index]
-                statute_effective_date_html = cached_html_file[index + 1]
+        if(statute_paragraph):
+            statute_html = cached_html_file[index]
+            statute_effective_date_html = cached_html_file[index + 1]
 
-                return statute_html, statute_effective_date_html 
+            return statute_html, statute_effective_date_html 
 
 
 def cache_query_dir(source : str, statute : str) -> str:
@@ -365,8 +364,8 @@ def main():
 
     args = arg_parser.parse_args()
 
-# Control for flags
 
+# Control for flags
     if (not len(sys.argv) > 1):
         arg_parser.print_help()
         sys.exit(1)
@@ -382,6 +381,27 @@ def main():
     if(args.extract_cache):
         extract_cache()
         sys.exit(0)
+
+# min validation
+
+    if args.source[0].upper() not in source.values():
+        print("{} was not found in Statute sources list, please try 'python tx_statutes -l".format(args.source[0]))
+        sys.exit(1)
+
+    query_types = ['web','cache-zip','cache-flatdir']
+
+    if args.query[0] not in query_types:
+        print("\'{}\' is an invalid query type, please try \'--query cache-flatdir\'".format(args.query[0]))
+        sys.exit(1)
+
+    format_types = ['text','html']
+
+    if args.format[0] not in format_types:
+        print("\'{}\' is an invalid output format, please try \'--format text\' or \'--format html\'".format(args.format[0]))
+        sys.exit(1)
+
+
+
 
     match (args.query[0]):
         case 'web':

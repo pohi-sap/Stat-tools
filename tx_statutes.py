@@ -115,6 +115,7 @@ def cache_query_zip(source : str, statute : str) -> str:
             print('No cache created, exiting')
             sys.exit(0)
 
+    else:
         try: 
             cachezipsourcefile = os.path.join(subdirectory, (source.upper() + '.htm.zip'))
             searchzipfile = source.lower() + '.' + section + '.htm'
@@ -356,7 +357,7 @@ def main():
                             metavar='544.007', type=str, nargs=1, 
                         help='Set statute number.')
     arg_parser.add_argument('-f','--format',
-                            metavar='text', type=str, nargs=1, default='text',
+                            metavar='text', type=str, nargs=1, default=['text'],
                         help='Choose output format, [-f html], [-f text] text(Default).')
     arg_parser.add_argument('-q','--query',
                             metavar='cache-zip', type=str, nargs=1, default=['cache-zip'],
@@ -368,7 +369,7 @@ def main():
 
     if (not len(sys.argv) > 1):
         arg_parser.print_help()
-        sys.exit(0)
+        sys.exit(1)
 
     if(args.list_sources):
         for s in source:
@@ -380,28 +381,27 @@ def main():
 
     if(args.extract_cache):
         extract_cache()
-        sys.exit()
+        sys.exit(0)
 
     match (args.query[0]):
         case 'web':
             statute_html, eff_date_html = web_query(args.source[0], args.statute[0])
-            print(output_conversion(statute_html,'text'))
+            print(output_conversion(statute_html,args.format[0]))
             print()
-            print(output_conversion(eff_date_html,'text'))
-            
+            print(output_conversion(eff_date_html,args.format[0]))
 
         case 'cache-zip':
             statute_html, eff_date_html = cache_query_zip(args.source[0], args.statute[0])
-            print(output_conversion(statute_html,'text'))
+            print(output_conversion(statute_html,args.format[0]))
             print()
-            print(output_conversion(eff_date_html,'text'))
+            print(output_conversion(eff_date_html,args.format[0]))
 
 
         case 'cache-flatdir':
             statute_html, eff_date_html = cache_query_dir(args.source[0], args.statute[0])
-            print(output_conversion(statute_html,'text'))
+            print(output_conversion(statute_html,args.format[0]))
             print()
-            print(output_conversion(eff_date_html,'text'))
+            print(output_conversion(eff_date_html,args.format[0]))
 
 if __name__ == '__main__':
     main()

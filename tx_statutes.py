@@ -19,7 +19,6 @@ class MyHTMLParser(HTMLParser):
     # include <br> for formatting.
     def handle_startendtag(self, tag, attrs):
         if(tag == 'br'): # we 'break' on p tags because statutes are separtaed into <p> tags, then len check cuts out white space of the output.
-            print('I see a br!')
             self.alldata += '\n'
 
     #try to structure tables correctly.
@@ -122,7 +121,12 @@ def cache_query_zip(source : str, statute : str) -> str:
         cachezipsourcefile = os.path.join(subdirectory, (source.upper() + '.htm.zip'))
         searchzipfile = source.lower() + '.' + section + '.htm'
         with ZipFile(cachezipsourcefile, mode="r") as zfile:
-            with zfile.open(searchzipfile) as f:
+            # allfiles -> dict map lower() to actual file name
+            file_name_lower_to_actual_mapping = dict()
+            for file in zfile.namelist():
+                file_name_lower_to_actual_mapping[file.lower()] = file
+
+            with zfile.open(file_name_lower_to_actual_mapping[searchzipfile]) as f:
                 html_cache_page = str(f.read()).replace('\\n', '').replace(r"\'","'") # im getting extra \n not sure why here. # replace \' also messing things up for me, personally >:|
         cached_html_file = html_cache_page.split('\\r')
     except ValueError:

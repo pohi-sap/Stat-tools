@@ -50,7 +50,6 @@ class MyHTMLParser(HTMLParser):
     def handle_data(self, data):
         self.alldata += data 
 
-
 # Web request
 def web_query(source : str, statute : str) -> str:
     """
@@ -288,9 +287,17 @@ def convert_text_to_sql(statute_text: str) -> tuple[list[str], int, str]:
             the row count, and the CSV-formatted subsections.
     """
 
+    #sqlite_obj = dict()
+    #sqlite_obj['title'] = ''
+    #sqlite_obj['line_count'] = int(0)
+    #sqlite_obj['subsections_cvs'] = []
+    #sqlite_obj['lines_formatted'] = {}
+
     # Split the text into lines
     lines = [line.strip() for line in statute_text.split('\n') if line]
     statute_title = ''
+    subsection_text = []
+    single_line_statute = ''
 
     # regex, explained
     subsections_re = re.compile(r"""\(                      # find first open parenthesis
@@ -305,6 +312,7 @@ def convert_text_to_sql(statute_text: str) -> tuple[list[str], int, str]:
         match = subsections_re.search(line)
         if match:
             subsections.append(match.group(1))
+            subsection_text.append(line[(match.end()+1):])
 
     # Join subsections into a CSV-formatted string
     csv_subsections = ','.join(subsections)
@@ -318,7 +326,7 @@ def convert_text_to_sql(statute_text: str) -> tuple[list[str], int, str]:
                                             \d+ # End part of statute number
                                             \.  # Statute is followed by a '.'
                                             \s+ # Fly through any spaces
-                                            ([A-Z -]+) # This is title of statute, has spaces and sometimes hyphens!
+                                            ([A-Z0-9 -;:]+) # This is title of statute, has spaces and sometimes hyphens!
                                             \.""", re.X)
 
     for ln in lines:
@@ -326,9 +334,16 @@ def convert_text_to_sql(statute_text: str) -> tuple[list[str], int, str]:
         if match:
             statute_title = match.group(1)
             break
+    if(len(lines) == 1):
+        print(lines[0])
+        match = statute_title_re.search(lines[0])
+        print(match.endpos)
+        if match:
+            single_line_statute = lines[0][(1 + match.endpos):]
+            print(single_line_statute)
 
 
-    return lines, len(lines), statute_title, csv_subsections
+    return lines, len(lines), statute_title, subsections, subsection_text
 
 def output_conversion(input_html : str, _format : str) -> str:
     match (_format):
@@ -430,10 +445,16 @@ def main():
 
         case 'cache-zip':
             statute_html, eff_date_html = cache_query_zip(args.source[0], args.statute[0])
-            print(output_conversion(statute_html,args.format[0]))
-            print()
-            print(output_conversion(eff_date_html,args.format[0]))
 
+            lines, line_len, stat_title, subsections_csv_format, subsection_text = convert_text_to_sql(output_conversion(statute_html,'text'))
+            eff_date = output_conversion(eff_date_html,'text')
+            #for _ in lines:
+                #print(_)
+            print(stat_title)
+            for _ in range(0,len(subsections_csv_format)):
+                print('{} : {}'.format(subsections_csv_format[_], subsection_text[_]))
+
+            print(line_len,'{} len({})'.format(subsections_csv_format,len(subsections_csv_format)), sep='\n')
 
         case 'cache-flatdir':
             statute_html, eff_date_html = cache_query_dir(args.source[0], args.statute[0])

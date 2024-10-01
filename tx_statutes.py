@@ -121,7 +121,12 @@ def cache_query_zip(source : str, statute : str) -> str:
         cachezipsourcefile = os.path.join(subdirectory, (source.upper() + '.htm.zip'))
         searchzipfile = source.lower() + '.' + section + '.htm'
         with ZipFile(cachezipsourcefile, mode="r") as zfile:
-            with zfile.open(searchzipfile) as f:
+            # allfiles -> dict map lower() to actual file name
+            file_name_lower_to_actual_mapping = dict()
+            for file in zfile.namelist():
+                file_name_lower_to_actual_mapping[file.lower()] = file
+
+            with zfile.open(file_name_lower_to_actual_mapping[searchzipfile]) as f:
                 html_cache_page = str(f.read()).replace('\\n', '').replace(r"\'","'") # im getting extra \n not sure why here. # replace \' also messing things up for me, personally >:|
         cached_html_file = html_cache_page.split('\\r')
     except ValueError:
@@ -164,9 +169,17 @@ def cache_query_dir(source : str, statute : str) -> str:
             sys.exit(0)
 
     try: 
-        searchzipfile = os.path.join(subdirectory, (source.lower() + '.' + section + '.htm'))
+        flatdir_file_lower = (source.lower() + '.' + section + '.htm')
 
-        with open(searchzipfile) as f:
+        # allfiles -> dict map lower() to actual file name
+        file_name_lower_to_actual_mapping = dict()
+        for file in os.listdir(subdirectory):
+            file_name_lower_to_actual_mapping[file.lower()] = file
+
+        # use dict mapping to avoid case sensitive search
+        actual_file_name = os.path.join(subdirectory, file_name_lower_to_actual_mapping[flatdir_file_lower])
+
+        with open(actual_file_name) as f:
                 html_cache_file = f.read()
         cached_html_file = html_cache_file.split('\n')
     except ValueError:

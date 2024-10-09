@@ -8,45 +8,22 @@ import re
 import os
 
 class MyHTMLParser(HTMLParser):
-    # TODO replace with in-memory string builder thing.
     alldata = ''
 
     def handle_starttag(self, tag, attrs):
-        #if(tag == 'p' and len(attrs) > 1): # we 'break' on p tags because statutes are separtaed into <p> tags, then len check cuts out white space of the output.
         if(tag == 'p'): # we 'break' on p tags because statutes are separtaed into <p> tags
             self.alldata += '\n'
-        if(tag == 'tr'): # we format on table tags because of TX 11.22
+        if(tag == 'tr'): # we format on table tags because of TX 11.22, see issues #6
             self.alldata += '\n'
 
     # include <br> for formatting.
     def handle_startendtag(self, tag, attrs):
-        if(tag == 'br'): # we 'break' on p tags because statutes are separtaed into <p> tags, then len check cuts out white space of the output.
+        if(tag == 'br'): 
             self.alldata += '\n'
 
-    #try to structure tables correctly.
-    #def handle_endtag(self, tag):
-    #    if(tag == 'th'): # we format on table tags because of TX 11.22
-    #        self.alldata += '\t'
-
-    # This has no effect, missing attrs so it doesnt actually perform action of appending \t to the html.
-    #def handle_endtag(self, tag):
-    #    if(tag == 'td'): # we format on table tags because of TX 11.22
-    #        self.alldata += '\t'
-    
-
-    # this doesnt work, i dont know why and it makes me sad :(
-    # starttag,     +attrs formats the table, ish, but ruins the rest of the output, 
-    # starttag,     -attrs Type error here, says the thing is expecting 3 args.
-    # endttag,      +attrs does not format the table, but rest of the output is NOT ruined.
-    # endttag,      -attrs no tabs added to table.
-
-    #include table formatting.
-#    def handle_starttag(self, tag, attrs):
-#        if(tag == 'tr'): # we format on table tags because of TX 11.22
-#            self.alldata += '\n'
-#
+    # Mostly for tables at the moment.
     def handle_endtag(self, tag):
-        if(tag == 'td'): # we format on table tags because of TX 11.22
+        if(tag == 'td'): # we format on table tags because of TX 11.22, see issue #6
             self.alldata += '\t'
         if(tag == 'table'):
             self.alldata += '\n'

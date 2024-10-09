@@ -15,6 +15,8 @@ class MyHTMLParser(HTMLParser):
         #if(tag == 'p' and len(attrs) > 1): # we 'break' on p tags because statutes are separtaed into <p> tags, then len check cuts out white space of the output.
         if(tag == 'p'): # we 'break' on p tags because statutes are separtaed into <p> tags
             self.alldata += '\n'
+        if(tag == 'tr'): # we format on table tags because of TX 11.22
+            self.alldata += '\n'
 
     # include <br> for formatting.
     def handle_startendtag(self, tag, attrs):
@@ -39,13 +41,15 @@ class MyHTMLParser(HTMLParser):
     # endttag,      -attrs no tabs added to table.
 
     #include table formatting.
-    def handle_endtag(self, tag, attrs):
-        if(tag == 'tr'): # we format on table tags because of TX 11.22
-            self.alldata += '\n'
-
+#    def handle_starttag(self, tag, attrs):
+#        if(tag == 'tr'): # we format on table tags because of TX 11.22
+#            self.alldata += '\n'
+#
     def handle_endtag(self, tag):
         if(tag == 'td'): # we format on table tags because of TX 11.22
             self.alldata += '\t'
+        if(tag == 'table'):
+            self.alldata += '\n'
 
     def handle_data(self, data):
         self.alldata += data 

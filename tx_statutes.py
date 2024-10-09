@@ -8,47 +8,29 @@ import re
 import os
 
 class MyHTMLParser(HTMLParser):
-    # TODO replace with in-memory string builder thing.
     alldata = ''
 
     def handle_starttag(self, tag, attrs):
-        #if(tag == 'p' and len(attrs) > 1): # we 'break' on p tags because statutes are separtaed into <p> tags, then len check cuts out white space of the output.
         if(tag == 'p'): # we 'break' on p tags because statutes are separtaed into <p> tags
+            self.alldata += '\n'
+        if(tag == 'tr'): # we format on table tags because of TX 11.22, see issues #6
             self.alldata += '\n'
 
     # include <br> for formatting.
     def handle_startendtag(self, tag, attrs):
-        if(tag == 'br'): # we 'break' on p tags because statutes are separtaed into <p> tags, then len check cuts out white space of the output.
+        if(tag == 'br'): 
             self.alldata += '\n'
 
-    #try to structure tables correctly.
-    #def handle_endtag(self, tag):
-    #    if(tag == 'th'): # we format on table tags because of TX 11.22
-    #        self.alldata += '\t'
-
-    # This has no effect, missing attrs so it doesnt actually perform action of appending \t to the html.
-    #def handle_endtag(self, tag):
-    #    if(tag == 'td'): # we format on table tags because of TX 11.22
-    #        self.alldata += '\t'
-    
-
-    # this doesnt work, i dont know why and it makes me sad :(
-    # starttag,     +attrs formats the table, ish, but ruins the rest of the output, 
-    # starttag,     -attrs Type error here, says the thing is expecting 3 args.
-    # endttag,      +attrs does not format the table, but rest of the output is NOT ruined.
-    # endttag,      -attrs no tabs added to table.
-
-    #include table formatting.
-    def handle_endtag(self, tag, attrs):
-        if(tag == 'tr'): # we format on table tags because of TX 11.22
-            self.alldata += '\n'
-
+    # Mostly for tables at the moment.
     def handle_endtag(self, tag):
-        if(tag == 'td'): # we format on table tags because of TX 11.22
+        if(tag == 'td'): # we format on table tags because of TX 11.22, see issue #6
             self.alldata += '\t'
+        if(tag == 'table'):
+            self.alldata += '\n'
 
     def handle_data(self, data):
         self.alldata += data 
+
 
 # Web request
 def web_query(source : str, statute : str) -> str:
@@ -297,7 +279,6 @@ def convert_text_to_sql(statute_text: str) -> tuple[list[str], int, str]:
     lines = [line.strip() for line in statute_text.split('\n') if line]
     statute_title = ''
     subsection_text = []
-    single_line_statute = ''
 
     # regex, explained
     subsections_re = re.compile(r"""\(                      # find first open parenthesis
@@ -335,12 +316,10 @@ def convert_text_to_sql(statute_text: str) -> tuple[list[str], int, str]:
             statute_title = match.group(1)
             break
     if(len(lines) == 1):
-        print(lines[0])
         match = statute_title_re.search(lines[0])
-        print(match.endpos)
+        print('Positions Start: {} end: {} '.format(match.start(),match.end()))
         if match:
-            single_line_statute = lines[0][(1 + match.endpos):]
-            print(single_line_statute)
+            lines[0] = lines[0][match.end():]
 
 
     return lines, len(lines), statute_title, subsections, subsection_text
@@ -450,11 +429,18 @@ def main():
             eff_date = output_conversion(eff_date_html,'text')
             #for _ in lines:
                 #print(_)
-            print(stat_title)
-            for _ in range(0,len(subsections_csv_format)):
-                print('{} : {}'.format(subsections_csv_format[_], subsection_text[_]))
+            print('Statute Title: {}'.format(stat_title))
 
-            print(line_len,'{} len({})'.format(subsections_csv_format,len(subsections_csv_format)), sep='\n')
+            if(len(lines) == 1):
+                print('Statute text:{}'.format(lines[0]))
+            elif (len(subsections_csv_format) < 1):
+                for _ in range(0,len(lines)):
+                    print('{}'.format(lines[_]))
+            else:
+                for _ in range(0,len(subsections_csv_format)):
+                    print('{}:{}'.format(subsections_csv_format[_], subsection_text[_]))
+
+            print('lines length: {}'.format(line_len),'Subsections: {} Subsec count:len({})'.format(subsections_csv_format,len(subsections_csv_format)), sep='\n')
 
         case 'cache-flatdir':
             statute_html, eff_date_html = cache_query_dir(args.source[0], args.statute[0])

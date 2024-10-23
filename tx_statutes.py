@@ -301,14 +301,14 @@ def convert_text_to_sql(statute_text: str) -> tuple[list[str], int, str]:
     # Find Statute title using regex
 
     # regex, explained
-    statute_title_re = re.compile(r"""Sec.*     # Look for 'Sec'
-                                            \d+ # Check for first part of statute number
-                                            \.  # statute number separated by '.'
-                                            \d+ # End part of statute number
-                                            \.  # Statute is followed by a '.'
-                                            \s+ # Fly through any spaces
-                                            ([A-Z0-9 -;:]+) # This is title of statute, has spaces and sometimes hyphens!
-                                            \.""", re.X)
+    statute_title_re = re.compile(r"""
+                                   Sec\.             # Look for 'Sec' followed by any character
+                                   \s*               # Match zero or more white spaces
+                                   (?:\d+(?:\.\d+)*) # Find Single number statute, (Sec. 6) or statute with trailing numbers (Sec. 11.17), dont include these in the match
+                                   \.?\s*            # Match an optional period and zero or more whitespace characters
+                                   ([A-Z0-9 -;:]+)   # This is title of statute, has spaces and sometimes hyphens!
+                                   \.
+                                  """, re.VERBOSE)
 
     for ln in lines:
         match = statute_title_re.search(ln)
@@ -317,8 +317,8 @@ def convert_text_to_sql(statute_text: str) -> tuple[list[str], int, str]:
             break
     if(len(lines) == 1):
         match = statute_title_re.search(lines[0])
-        print('Positions Start: {} end: {} '.format(match.start(),match.end()))
         if match:
+            print('Positions Start: {} end: {} '.format(match.start(),match.end()))
             lines[0] = lines[0][match.end():]
 
 
